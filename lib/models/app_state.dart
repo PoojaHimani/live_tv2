@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'channel.dart';
@@ -5,7 +6,18 @@ import 'program.dart';
 
 class AppState extends ChangeNotifier {
   List<Channel> _channels = [];
-  List<Program> _programs = [];
+  List<Program> _programs = [
+    Program(
+      id: '1',
+      channelId: 'channel_1',
+      title: 'Sample MP4 Video 1',
+      videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+      videoType: VideoType.mp4,
+      startTime: DateTime.now(),
+      endTime: DateTime.now().add(const Duration(hours: 1)),
+      duration: const Duration(minutes: 10),
+    ),
+  ];
   String _selectedCategory = 'RECENT';
   bool _isAuthenticated = false;
   String _settingsPassword = '1234'; // Default password
@@ -56,7 +68,7 @@ class AppState extends ChangeNotifier {
             endTime: now.add(const Duration(hours: 1)),
             duration: const Duration(hours: 1),
             videoUrl: '',
-            videoType: VideoType.youtube,
+            videoType: VideoType.mp4,
           ),
     );
   }
@@ -161,29 +173,30 @@ class AppState extends ChangeNotifier {
   Future<void> _saveChannels() async {
     final prefs = await SharedPreferences.getInstance();
     final channelData = _channels.map((c) => c.toJson()).toList();
-    await prefs.setString('channels', channelData.toString());
+    await prefs.setString('channels', jsonEncode(channelData));
   }
 
   Future<void> _loadChannels() async {
     final prefs = await SharedPreferences.getInstance();
-    final channelData = prefs.getString('channels');
-    if (channelData != null) {
-      // Parse channel data and populate _channels
-      // This is a simplified version - in a real app you'd use proper JSON parsing
+    final channelDataString = prefs.getString('channels');
+    if (channelDataString != null) {
+      final List<dynamic> jsonList = jsonDecode(channelDataString);
+      _channels = jsonList.map((json) => Channel.fromJson(json)).toList();
     }
   }
 
   Future<void> _savePrograms() async {
     final prefs = await SharedPreferences.getInstance();
     final programData = _programs.map((p) => p.toJson()).toList();
-    await prefs.setString('programs', programData.toString());
+    await prefs.setString('programs', jsonEncode(programData));
   }
 
   Future<void> _loadPrograms() async {
     final prefs = await SharedPreferences.getInstance();
-    final programData = prefs.getString('programs');
-    if (programData != null) {
-      // Parse program data and populate _programs
+    final programDataString = prefs.getString('programs');
+    if (programDataString != null) {
+      final List<dynamic> jsonList = jsonDecode(programDataString);
+      _programs = jsonList.map((json) => Program.fromJson(json)).toList();
     }
   }
 
@@ -192,16 +205,17 @@ class AppState extends ChangeNotifier {
     if (_defaultProgram != null) {
       await prefs.setString(
         'default_program',
-        _defaultProgram!.toJson().toString(),
+        jsonEncode(_defaultProgram!.toJson()),
       );
     }
   }
 
   Future<void> _loadDefaultProgram() async {
     final prefs = await SharedPreferences.getInstance();
-    final defaultProgramData = prefs.getString('default_program');
-    if (defaultProgramData != null) {
-      // Parse default program data
+    final defaultProgramString = prefs.getString('default_program');
+    if (defaultProgramString != null) {
+      final Map<String, dynamic> json = jsonDecode(defaultProgramString);
+      _defaultProgram = Program.fromJson(json);
     }
   }
 

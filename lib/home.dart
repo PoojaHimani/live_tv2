@@ -114,8 +114,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample1.mp4',
+        videoType: VideoType.mp4,
         episodeInfo: 'S6 E12 - The Label Maker',
       ),
       Program(
@@ -125,8 +125,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 40)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample2.mp4',
+        videoType: VideoType.mp4,
         episodeInfo: 'S4 E13 - The Pick',
       ),
       Program(
@@ -136,8 +136,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 70)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample3.mp4',
+        videoType: VideoType.mp4,
         episodeInfo: 'S2 E11 - The Bath Item Gift Hypothesis',
       ),
       Program(
@@ -147,8 +147,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         duration: const Duration(hours: 3),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample4.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'kings_live',
@@ -157,8 +157,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 50)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample5.mp4',
+        videoType: VideoType.mp4,
         isNew: true,
       ),
       Program(
@@ -168,8 +168,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample6.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'grocery_games',
@@ -178,8 +178,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 40)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample7.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'cbs_news',
@@ -188,8 +188,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         duration: const Duration(hours: 1),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample8.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'sixty_minutes',
@@ -198,8 +198,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 80)),
         duration: const Duration(hours: 1),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample9.mp4',
+        videoType: VideoType.mp4,
         isNew: true,
       ),
       Program(
@@ -209,8 +209,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         duration: const Duration(hours: 1),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample10.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'shark_tank',
@@ -219,8 +219,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 80)),
         duration: const Duration(hours: 1),
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample11.mp4',
+        videoType: VideoType.mp4,
       ),
       // Movie programs
       Program(
@@ -230,8 +230,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 30)),
         endTime: now.add(const Duration(minutes: 120)),
         duration: const Duration(minutes: 150),
-        videoUrl: 'https://www.youtube.com/watch?v=TcMBFSGVi1c',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample12.mp4',
+        videoType: VideoType.mp4,
         isNew: true,
       ),
       Program(
@@ -241,8 +241,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 120)),
         endTime: now.add(const Duration(minutes: 270)),
         duration: const Duration(minutes: 150),
-        videoUrl: 'https://www.youtube.com/watch?v=JfVOs4VSpmA',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample13.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'frozen',
@@ -251,8 +251,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 15)),
         endTime: now.add(const Duration(minutes: 90)),
         duration: const Duration(minutes: 105),
-        videoUrl: 'https://www.youtube.com/watch?v=Zi4LMpSDccc',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample14.mp4',
+        videoType: VideoType.mp4,
       ),
       // Kids programs
       Program(
@@ -262,8 +262,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 20)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=sJxmUvQDJsg',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample15.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'spongebob',
@@ -272,8 +272,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 5)),
         endTime: now.add(const Duration(minutes: 25)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=FkL4CjckRZ0',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample16.mp4',
+        videoType: VideoType.mp4,
       ),
       Program(
         id: 'mickey_mouse',
@@ -282,8 +282,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 8)),
         endTime: now.add(const Duration(minutes: 22)),
         duration: const Duration(minutes: 30),
-        videoUrl: 'https://www.youtube.com/watch?v=MSuNThsjewM',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample17.mp4',
+        videoType: VideoType.mp4,
       ),
       // Additional movie programs
       Program(
@@ -293,8 +293,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 150)),
         endTime: now.add(const Duration(minutes: 330)),
         duration: const Duration(minutes: 180),
-        videoUrl: 'https://www.youtube.com/watch?v=mqqft2x_Aa4',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample18.mp4',
+        videoType: VideoType.mp4,
         isNew: true,
       ),
       Program(
@@ -304,8 +304,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 105)),
         endTime: now.add(const Duration(minutes: 210)),
         duration: const Duration(minutes: 105),
-        videoUrl: 'https://www.youtube.com/watch?v=LKFuXETZUsI',
-        videoType: VideoType.youtube,
+        videoUrl: 'assets/videos/sample19.mp4',
+        videoType: VideoType.mp4,
       ),
     ];
 
@@ -620,7 +620,7 @@ class _HomePageState extends State<HomePage> {
       endTime: endTime,
       duration: const Duration(minutes: 30),
       videoUrl: _getDefaultVideoUrl(channelId),
-      videoType: VideoType.youtube,
+      videoType: VideoType.mp4,
     );
   }
 
@@ -656,29 +656,29 @@ class _HomePageState extends State<HomePage> {
   String _getDefaultVideoUrl(String channelId) {
     switch (channelId) {
       case 'tbs':
-        return 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        return 'assets/videos/sample1.mp4';
       case 'fox_sports':
-        return 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        return 'assets/videos/sample2.mp4';
       case 'food_network':
-        return 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        return 'assets/videos/sample3.mp4';
       case 'cbs':
-        return 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        return 'assets/videos/sample4.mp4';
       case 'cnbc':
-        return 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        return 'assets/videos/sample5.mp4';
       case 'hbo':
-        return 'https://www.youtube.com/watch?v=TcMBFSGVi1c';
+        return 'assets/videos/sample6.mp4';
       case 'netflix':
-        return 'https://www.youtube.com/watch?v=JfVOs4VSpmA';
+        return 'assets/videos/sample7.mp4';
       case 'disney':
-        return 'https://www.youtube.com/watch?v=Zi4LMpSDccc';
+        return 'assets/videos/sample8.mp4';
       case 'cartoon_network':
-        return 'https://www.youtube.com/watch?v=sJxmUvQDJsg';
+        return 'assets/videos/sample9.mp4';
       case 'nickelodeon':
-        return 'https://www.youtube.com/watch?v=FkL4CjckRZ0';
+        return 'assets/videos/sample10.mp4';
       case 'disney_junior':
-        return 'https://www.youtube.com/watch?v=MSuNThsjewM';
+        return 'assets/videos/sample11.mp4';
       default:
-        return 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        return 'assets/videos/sample1.mp4';
     }
   }
 
@@ -780,6 +780,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _playProgram(Program program) {
+    print('Playing program: ${program.title}');
+    print('Video URL: ${program.videoUrl}');
+
+    // Navigate to video player immediately
     Navigator.push(
       context,
       MaterialPageRoute(
