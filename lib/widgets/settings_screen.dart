@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/app_state.dart';
 import '../models/channel.dart';
 import '../models/program.dart';
@@ -955,8 +956,304 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   void _showAddProgramDialog(BuildContext context) {
-    // Enhanced program dialog implementation
-    // This would be similar to your existing implementation but with improved UI
+    final titleController = TextEditingController();
+    final durationController = TextEditingController();
+
+    DateTime? selectedDateTime;
+    String? selectedChannelId;
+    String? selectedFilePath;
+
+    Future<void> pickDateTime() async {
+      final now = DateTime.now();
+      final date = await showDatePicker(
+        context: context,
+        initialDate: now,
+        firstDate: DateTime(now.year - 1),
+        lastDate: DateTime(now.year + 5),
+        builder: (context, child) => Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF4CAF50),
+              surface: Color(0xFF2A3F48),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (date == null) return;
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(now),
+        builder: (context, child) => Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF4CAF50),
+              surface: Color(0xFF2A3F48),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (time == null) return;
+      selectedDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    }
+
+    Future<void> pickMp4() async {
+      try {
+        // Late import to avoid unused import at file top
+        // ignore: avoid_dynamic_calls
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['mp4'],
+        );
+        if (result != null && result.files.isNotEmpty) {
+          selectedFilePath = result.files.single.path;
+        }
+      } catch (_) {
+        _showSnackBar('Failed to pick file', isError: true);
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => Consumer<AppState>(
+        builder: (context, appState, child) {
+          return StatefulBuilder(
+            builder: (context, setLocalState) => AlertDialog(
+              backgroundColor: const Color(0xFF2A3F48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                'Add Program',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDialogTextField(
+                      titleController,
+                      'Program Name',
+                      Icons.movie_creation_outlined,
+                    ),
+                    const SizedBox(height: 16),
+                    // Channel dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedChannelId,
+                      dropdownColor: const Color(0xFF1A2F38),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Icons.tv,
+                          color: Color(0xFF4CAF50),
+                        ),
+                        labelText: 'Select Channel',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4CAF50)),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF1A2F38),
+                      ),
+                      iconEnabledColor: Colors.white,
+                      style: const TextStyle(color: Colors.white),
+                      items: appState.channels
+                          .map(
+                            (c) => DropdownMenuItem<String>(
+                              value: c.id,
+                              child: Text(
+                                c.name,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setLocalState(() => selectedChannelId = value);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Start date & time
+                    InkWell(
+                      onTap: () async {
+                        await pickDateTime();
+                        setLocalState(() {});
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.event,
+                            color: Color(0xFF4CAF50),
+                          ),
+                          labelText: 'Select Start Date & Time',
+                          labelStyle: const TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFF4CAF50)),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFF1A2F38),
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            selectedDateTime == null
+                                ? 'Tap to choose'
+                                : DateFormat(
+                                    'MMM dd, yyyy h:mm a',
+                                  ).format(selectedDateTime!),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField(
+                      durationController,
+                      'Duration (minutes)',
+                      Icons.timer,
+                    ),
+                    const SizedBox(height: 16),
+                    // MP4 file picker
+                    InkWell(
+                      onTap: () async {
+                        await pickMp4();
+                        setLocalState(() {});
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.attach_file,
+                            color: Color(0xFF4CAF50),
+                          ),
+                          labelText: 'Choose MP4 File',
+                          labelStyle: const TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFF4CAF50)),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFF1A2F38),
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            selectedFilePath == null
+                                ? 'Tap to choose .mp4'
+                                : selectedFilePath!,
+                            style: const TextStyle(color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Validation
+                    if (titleController.text.trim().isEmpty) {
+                      _showSnackBar('Program name is required', isError: true);
+                      return;
+                    }
+                    if (selectedChannelId == null) {
+                      _showSnackBar('Please select a channel', isError: true);
+                      return;
+                    }
+                    if (selectedDateTime == null) {
+                      _showSnackBar(
+                        'Please select start date & time',
+                        isError: true,
+                      );
+                      return;
+                    }
+                    final durationMinutes = int.tryParse(
+                      durationController.text.trim(),
+                    );
+                    if (durationMinutes == null || durationMinutes <= 0) {
+                      _showSnackBar(
+                        'Enter a valid duration in minutes',
+                        isError: true,
+                      );
+                      return;
+                    }
+                    if (selectedFilePath == null ||
+                        !selectedFilePath!.toLowerCase().endsWith('.mp4')) {
+                      _showSnackBar('Please choose an MP4 file', isError: true);
+                      return;
+                    }
+
+                    final start = selectedDateTime!;
+                    final duration = Duration(minutes: durationMinutes);
+                    final end = start.add(duration);
+
+                    final program = Program(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      title: titleController.text.trim(),
+                      channelId: selectedChannelId!,
+                      startTime: start,
+                      endTime: end,
+                      duration: duration,
+                      videoUrl: selectedFilePath!,
+                      videoType: VideoType.mp4,
+                    );
+                    context.read<AppState>().addProgram(program);
+                    Navigator.pop(context);
+                    _showSnackBar('Program added successfully');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4CAF50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Add',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _showEditProgramDialog(BuildContext context, Program program) {
