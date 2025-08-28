@@ -52,12 +52,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   void _initializeVideo() {
-    // Use a working sample video URL for testing
-    String videoUrl =
-        'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4';
-
-    // If you want to use the original program URL, uncomment this:
-    // String videoUrl = widget.program.videoUrl;
+    // Use the actual program video URL
+    String videoUrl = widget.program.videoUrl;
 
     print('Loading video from: $videoUrl');
 

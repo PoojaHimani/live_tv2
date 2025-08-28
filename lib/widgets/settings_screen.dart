@@ -958,6 +958,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   void _showAddProgramDialog(BuildContext context) {
     final titleController = TextEditingController();
     final durationController = TextEditingController();
+    final urlController = TextEditingController();
 
     DateTime? selectedDateTime;
     String? selectedChannelId;
@@ -1174,6 +1175,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    const Text('or', style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 12),
+                    _buildDialogTextField(
+                      urlController,
+                      'MP4 URL (optional)',
+                      Icons.link,
+                    ),
                   ],
                 ),
               ),
@@ -1213,9 +1222,18 @@ class _SettingsScreenState extends State<SettingsScreen>
                       );
                       return;
                     }
-                    if (selectedFilePath == null ||
-                        !selectedFilePath!.toLowerCase().endsWith('.mp4')) {
-                      _showSnackBar('Please choose an MP4 file', isError: true);
+                    final url = urlController.text.trim();
+                    final hasLocalFile =
+                        selectedFilePath != null &&
+                        (selectedFilePath!.toLowerCase().endsWith('.mp4') ||
+                            selectedFilePath!.startsWith('blob:'));
+                    final hasMp4Url =
+                        url.isNotEmpty && url.toLowerCase().startsWith('http');
+                    if (!hasLocalFile && !hasMp4Url) {
+                      _showSnackBar(
+                        'Please choose an MP4 file or enter a valid HTTP URL',
+                        isError: true,
+                      );
                       return;
                     }
 
@@ -1230,7 +1248,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       startTime: start,
                       endTime: end,
                       duration: duration,
-                      videoUrl: selectedFilePath!,
+                      videoUrl: hasMp4Url ? url : selectedFilePath!,
                       videoType: VideoType.mp4,
                     );
                     context.read<AppState>().addProgram(program);
