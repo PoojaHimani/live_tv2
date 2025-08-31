@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'channel.dart';
 import 'program.dart';
 
@@ -15,13 +15,23 @@ class AppState extends ChangeNotifier {
       videoType: VideoType.mp4,
       startTime: DateTime.now(),
       endTime: DateTime.now().add(const Duration(hours: 1)),
-      duration: const Duration(minutes: 10),
+      durationSeconds: 600, // 10 minutes
     ),
   ];
   String _selectedCategory = 'RECENT';
   bool _isAuthenticated = false;
   String _settingsPassword = '1234'; // Default password
   Program? _defaultProgram;
+
+  // Hive box names
+  static const String _channelsBoxName = 'channels';
+  static const String _programsBoxName = 'programs';
+  static const String _settingsBoxName = 'settings';
+
+  // Hive boxes - keep them open
+  Box<Channel>? _channelsBox;
+  Box<Program>? _programsBox;
+  Box? _settingsBox;
 
   // Getters
   List<Channel> get channels => _channels;
@@ -66,7 +76,7 @@ class AppState extends ChangeNotifier {
             channelId: channelId,
             startTime: now,
             endTime: now.add(const Duration(hours: 1)),
-            duration: const Duration(hours: 1),
+            durationSeconds: 3600, // 1 hour
             videoUrl: '',
             videoType: VideoType.mp4,
           ),
@@ -96,6 +106,7 @@ class AppState extends ChangeNotifier {
 
   // CRUD operations for channels
   void addChannel(Channel channel) {
+    print('Adding channel: ${channel.name}');
     _channels.add(channel);
     notifyListeners();
     _saveChannels();
@@ -120,6 +131,7 @@ class AppState extends ChangeNotifier {
 
   // CRUD operations for programs
   void addProgram(Program program) {
+    print('Adding program: ${program.title}');
     _programs.add(program);
     notifyListeners();
     _savePrograms();
@@ -163,72 +175,244 @@ class AppState extends ChangeNotifier {
 
   // Persistence methods
   Future<void> loadData() async {
-    await _loadChannels();
-    await _loadPrograms();
-    await _loadDefaultProgram();
-    await _loadSettingsPassword();
+    print('Loading data from Hive...');
+
+    try {
+      // Initialize Hive boxes if not already done
+      if (_channelsBox == null) {
+        _channelsBox = await Hive.openBox<Channel>(_channelsBoxName);
+        print('Opened channels box: ${_channelsBox?.name}');
+      }
+      if (_programsBox == null) {
+        _programsBox = await Hive.openBox<Program>(_programsBoxName);
+        print('Opened programs box: ${_programsBox?.name}');
+      }
+      if (_settingsBox == null) {
+        _settingsBox = await Hive.openBox(_settingsBoxName);
+        print('Opened settings box: ${_settingsBox?.name}');
+      }
+
+      await _loadChannels();
+      await _loadPrograms();
+      await _loadDefaultProgram();
+      await _loadSettingsPassword();
+
+      print(
+        'Successfully loaded ${_channels.length} channels and ${_programs.length} programs from Hive',
+      );
+    } catch (e) {
+      print('Error in loadData: $e');
+    }
+
     notifyListeners();
   }
 
   Future<void> _saveChannels() async {
-    final prefs = await SharedPreferences.getInstance();
-    final channelData = _channels.map((c) => c.toJson()).toList();
-    await prefs.setString('channels', jsonEncode(channelData));
+    try {
+      if (_channelsBox == null) {
+        _channelsBox = await Hive.openBox<Channel>(_channelsBoxName);
+      }
+
+      print('Saving ${_channels.length} channels to Hive...');
+      await _channelsBox!.clear();
+
+      for (final channel in _channels) {
+        await _channelsBox!.put(channel.id, channel); // Using ID as key
+        print('Saved channel: ${channel.name} (ID: ${channel.id})');
+      }
+
+      print('Successfully saved ${_channels.length} channels to Hive');
+    } catch (e) {
+      print('Error saving channels: $e');
+    }
   }
 
   Future<void> _loadChannels() async {
-    final prefs = await SharedPreferences.getInstance();
-    final channelDataString = prefs.getString('channels');
-    if (channelDataString != null) {
-      final List<dynamic> jsonList = jsonDecode(channelDataString);
-      _channels = jsonList.map((json) => Channel.fromJson(json)).toList();
+    try {
+      if (_channelsBox == null) {
+        _channelsBox = await Hive.openBox<Channel>(_channelsBoxName);
+      }
+
+      final keys = _channelsBox!.keys.toList();
+      print('Found ${keys.length} channel keys in Hive: $keys');
+
+      _channels.clear();
+      for (final key in keys) {
+        final channel = _channelsBox!.get(key);
+        if (channel != null) {
+          _channels.add(channel);
+          print('Loaded channel: ${channel.name} (ID: ${channel.id})');
+        }
+      }
+
+      print('Successfully loaded ${_channels.length} channels from Hive');
+    } catch (e) {
+      print('Error loading channels: $e');
     }
   }
 
   Future<void> _savePrograms() async {
-    final prefs = await SharedPreferences.getInstance();
-    final programData = _programs.map((p) => p.toJson()).toList();
-    await prefs.setString('programs', jsonEncode(programData));
+    try {
+      if (_programsBox == null) {
+        _programsBox = await Hive.openBox<Program>(_programsBoxName);
+      }
+
+      print('Saving ${_programs.length} programs to Hive...');
+      await _programsBox!.clear();
+
+      for (final program in _programs) {
+        await _programsBox!.put(program.id, program); // Using ID as key
+        print('Saved program: ${program.title} (ID: ${program.id})');
+      }
+
+      print('Successfully saved ${_programs.length} programs to Hive');
+    } catch (e) {
+      print('Error saving programs: $e');
+    }
   }
 
   Future<void> _loadPrograms() async {
-    final prefs = await SharedPreferences.getInstance();
-    final programDataString = prefs.getString('programs');
-    if (programDataString != null) {
-      final List<dynamic> jsonList = jsonDecode(programDataString);
-      _programs = jsonList.map((json) => Program.fromJson(json)).toList();
+    try {
+      if (_programsBox == null) {
+        _programsBox = await Hive.openBox<Program>(_programsBoxName);
+      }
+
+      final keys = _programsBox!.keys.toList();
+      print('Found ${keys.length} program keys in Hive: $keys');
+
+      _programs.clear();
+      for (final key in keys) {
+        final program = _programsBox!.get(key);
+        if (program != null) {
+          _programs.add(program);
+          print('Loaded program: ${program.title} (ID: ${program.id})');
+        }
+      }
+
+      print('Successfully loaded ${_programs.length} programs from Hive');
+    } catch (e) {
+      print('Error loading programs: $e');
     }
   }
 
   Future<void> _saveDefaultProgram() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (_defaultProgram != null) {
-      await prefs.setString(
-        'default_program',
-        jsonEncode(_defaultProgram!.toJson()),
-      );
+    try {
+      if (_settingsBox == null) {
+        _settingsBox = await Hive.openBox(_settingsBoxName);
+      }
+      if (_defaultProgram != null) {
+        await _settingsBox!.put('default_program', _defaultProgram!.toJson());
+        print('Saved default program to Hive');
+      }
+    } catch (e) {
+      print('Error saving default program: $e');
     }
   }
 
   Future<void> _loadDefaultProgram() async {
-    final prefs = await SharedPreferences.getInstance();
-    final defaultProgramString = prefs.getString('default_program');
-    if (defaultProgramString != null) {
-      final Map<String, dynamic> json = jsonDecode(defaultProgramString);
-      _defaultProgram = Program.fromJson(json);
+    try {
+      if (_settingsBox == null) {
+        _settingsBox = await Hive.openBox(_settingsBoxName);
+      }
+      final defaultProgramData = _settingsBox!.get('default_program');
+      if (defaultProgramData != null) {
+        _defaultProgram = Program.fromJson(defaultProgramData);
+        print('Loaded default program from Hive');
+      }
+    } catch (e) {
+      print('Error loading default program: $e');
     }
   }
 
   Future<void> _saveSettingsPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('settings_password', _settingsPassword);
+    try {
+      if (_settingsBox == null) {
+        _settingsBox = await Hive.openBox(_settingsBoxName);
+      }
+      await _settingsBox!.put('settings_password', _settingsPassword);
+      print('Saved settings password to Hive');
+    } catch (e) {
+      print('Error saving settings password: $e');
+    }
   }
 
   Future<void> _loadSettingsPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    final password = prefs.getString('settings_password');
-    if (password != null) {
-      _settingsPassword = password;
+    try {
+      if (_settingsBox == null) {
+        _settingsBox = await Hive.openBox(_settingsBoxName);
+      }
+      final password = _settingsBox!.get('settings_password');
+      if (password != null) {
+        _settingsPassword = password;
+        print('Loaded settings password from Hive');
+      }
+    } catch (e) {
+      print('Error loading settings password: $e');
     }
+  }
+
+  // Force reload data from Hive (useful for debugging)
+  Future<void> forceReloadData() async {
+    print('=== Force Reloading Data ===');
+
+    try {
+      // Close existing boxes to force fresh connection
+      await _channelsBox?.close();
+      await _programsBox?.close();
+      await _settingsBox?.close();
+
+      _channelsBox = null;
+      _programsBox = null;
+      _settingsBox = null;
+
+      // Reload data
+      await loadData();
+
+      print('Force reload completed');
+    } catch (e) {
+      print('Error in force reload: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    print('Disposing AppState - closing Hive boxes');
+    _channelsBox?.close();
+    _programsBox?.close();
+    _settingsBox?.close();
+    super.dispose();
+  }
+
+  // Test method to verify Hive is working
+  Future<void> testHiveConnection() async {
+    try {
+      print('Testing Hive connection...');
+      final testBox = await Hive.openBox('test_box');
+      await testBox.put('test_key', 'test_value');
+      final testValue = testBox.get('test_key');
+      await testBox.close();
+      print('Hive test successful: $testValue');
+      return;
+    } catch (e) {
+      print('Hive test failed: $e');
+      rethrow;
+    }
+  }
+
+  // Debug method to show current state
+  void debugCurrentState() {
+    print('=== Current AppState Debug ===');
+    print('Channels: ${_channels.length}');
+    for (final channel in _channels) {
+      print('  - ${channel.name} (${channel.id})');
+    }
+    print('Programs: ${_programs.length}');
+    for (final program in _programs) {
+      print('  - ${program.title} (${program.id})');
+    }
+    print('ChannelsBox: ${_channelsBox?.name}');
+    print('ProgramsBox: ${_programsBox?.name}');
+    print('SettingsBox: ${_settingsBox?.name}');
+    print('=============================');
   }
 }

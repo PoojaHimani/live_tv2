@@ -29,10 +29,23 @@ class _HomePageState extends State<HomePage> {
       });
     });
 
-    // Load initial data
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AppState>().loadData();
-      _loadSampleData();
+    // Load stored data first, then ensure base data exists without overwriting user additions
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final appState = context.read<AppState>();
+
+      // Load data from Hive first
+      await appState.loadData();
+
+      // Only load sample data if this is the first time (no existing data)
+      if (appState.channels.isEmpty && appState.programs.length <= 1) {
+        print('Loading sample data for first time...');
+        _loadSampleData();
+      } else {
+        print('Skipping sample data load - existing data found');
+        print(
+          'Found ${appState.channels.length} channels and ${appState.programs.length} programs',
+        );
+      }
     });
   }
 
@@ -45,10 +58,7 @@ class _HomePageState extends State<HomePage> {
   void _loadSampleData() {
     final appState = context.read<AppState>();
 
-    // Clear existing data first
-    appState.clearAllData();
-
-    // Add sample channels
+    // Base channels (added only if missing)
     final channels = [
       Channel(id: 'tbs', name: 'tbs', category: 'RECENT', logo: 'tbs'),
       Channel(
@@ -101,19 +111,22 @@ class _HomePageState extends State<HomePage> {
     ];
 
     for (final channel in channels) {
-      appState.addChannel(channel);
+      final exists = appState.channels.any((c) => c.id == channel.id);
+      if (!exists) {
+        appState.addChannel(channel);
+      }
     }
 
-    // Add sample programs
+    // Base programs (added only if missing)
     final now = DateTime.now();
-    final programs = [
+    final seedPrograms = [
       Program(
         id: 'seinfeld_1',
         title: 'Seinfeld',
         channelId: 'tbs',
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
-        duration: const Duration(minutes: 30),
+        durationSeconds: 1800, // 30 minutes
         videoUrl: 'assets/videos/sample1.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S6 E12 - The Label Maker',
@@ -124,7 +137,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'tbs',
         startTime: now.add(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 40)),
-        duration: const Duration(minutes: 30),
+        durationSeconds: 1800, // 30 minutes
         videoUrl: 'assets/videos/sample2.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S4 E13 - The Pick',
@@ -135,7 +148,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'tbs',
         startTime: now.add(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 70)),
-        duration: const Duration(minutes: 30),
+        durationSeconds: 1800, // 30 minutes
         videoUrl: 'assets/videos/sample3.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S2 E11 - The Bath Item Gift Hypothesis',
@@ -146,7 +159,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'fox_sports',
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
-        duration: const Duration(hours: 3),
+        durationSeconds: 10800, // 3 hours
         videoUrl: 'assets/videos/sample4.mp4',
         videoType: VideoType.mp4,
       ),
@@ -156,7 +169,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'fox_sports',
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 50)),
-        duration: const Duration(minutes: 30),
+        durationSeconds: 1800, // 30 minutes
         videoUrl: 'assets/videos/sample5.mp4',
         videoType: VideoType.mp4,
         isNew: true,
@@ -167,7 +180,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'food_network',
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
-        duration: const Duration(minutes: 30),
+        durationSeconds: 1800, // 30 minutes
         videoUrl: 'assets/videos/sample6.mp4',
         videoType: VideoType.mp4,
       ),
@@ -177,7 +190,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'food_network',
         startTime: now.add(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 40)),
-        duration: const Duration(minutes: 30),
+        durationSeconds: 1800, // 30 minutes
         videoUrl: 'assets/videos/sample7.mp4',
         videoType: VideoType.mp4,
       ),
@@ -187,7 +200,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'cbs',
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
-        duration: const Duration(hours: 1),
+        durationSeconds: 3600, // 1 hour
         videoUrl: 'assets/videos/sample8.mp4',
         videoType: VideoType.mp4,
       ),
@@ -197,7 +210,7 @@ class _HomePageState extends State<HomePage> {
         channelId: 'cbs',
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 80)),
-        duration: const Duration(hours: 1),
+        durationSeconds: 3600, // 1 hour
         videoUrl: 'assets/videos/sample9.mp4',
         videoType: VideoType.mp4,
         isNew: true,
@@ -309,8 +322,11 @@ class _HomePageState extends State<HomePage> {
       ),
     ];
 
-    for (final program in programs) {
-      appState.addProgram(program);
+    for (final program in seedPrograms) {
+      final exists = appState.programs.any((p) => p.id == program.id);
+      if (!exists) {
+        appState.addProgram(program);
+      }
     }
   }
 
@@ -318,6 +334,65 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A2F38),
+      appBar: AppBar(
+        title: const Text('Live TV'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          // Test button to verify Hive persistence
+          IconButton(
+            icon: const Icon(Icons.storage),
+            onPressed: () async {
+              final appState = context.read<AppState>();
+              print('=== Testing Hive Persistence ===');
+              print('Current programs: ${appState.programs.length}');
+              for (final program in appState.programs) {
+                print('  - ${program.title} (ID: ${program.id})');
+              }
+
+              // Test adding a temporary program
+              final testProgram = Program(
+                id: 'test_${DateTime.now().millisecondsSinceEpoch}',
+                title:
+                    'Test Program ${DateTime.now().hour}:${DateTime.now().minute}',
+                channelId: 'test_channel',
+                startTime: DateTime.now(),
+                endTime: DateTime.now().add(const Duration(hours: 1)),
+                durationSeconds: 3600, // 1 hour
+                videoUrl: 'https://example.com/test.mp4',
+                videoType: VideoType.mp4,
+              );
+
+              appState.addProgram(testProgram);
+              print('Added test program: ${testProgram.title}');
+              print('Programs after adding: ${appState.programs.length}');
+            },
+            tooltip: 'Test Hive Persistence',
+          ),
+          // Force reload button for debugging
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () async {
+              final appState = context.read<AppState>();
+              print('=== Force Reloading Data ===');
+              await appState.forceReloadData();
+              print(
+                'Force reload completed. Programs: ${appState.programs.length}',
+              );
+            },
+            tooltip: 'Force Reload Data',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Consumer<AppState>(
           builder: (context, appState, child) {
@@ -362,11 +437,29 @@ class _HomePageState extends State<HomePage> {
                         appState.selectedCategory == 'KIDS',
                       ),
                       const Spacer(),
-                      IconButton(
-                        onPressed: () => _showSettings(context),
-                        icon: const Icon(Icons.settings, color: Colors.white),
-                        tooltip: 'Settings',
+                      // Debug info
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Channels: ${appState.channels.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
+                            ),
+                            Text(
+                              'Programs: ${appState.programs.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+
                       const SizedBox(height: 20),
                     ],
                   ),

@@ -1,17 +1,55 @@
-enum VideoType { mp4, youtube, hls, dash }
+import 'package:hive/hive.dart';
 
-class Program {
+part 'program.g.dart';
+
+@HiveType(typeId: 1)
+enum VideoType {
+  @HiveField(0)
+  mp4,
+  @HiveField(1)
+  youtube,
+  @HiveField(2)
+  hls,
+  @HiveField(3)
+  dash
+}
+
+@HiveType(typeId: 2)
+class Program extends HiveObject {
+  @HiveField(0)
   final String id;
+  
+  @HiveField(1)
   final String title;
+  
+  @HiveField(2)
   final String channelId;
+  
+  @HiveField(3)
   final DateTime startTime;
+  
+  @HiveField(4)
   final DateTime endTime;
-  final Duration duration;
+  
+  @HiveField(5)
+  final int durationSeconds;
+  
+  @HiveField(6)
   final String videoUrl;
+  
+  @HiveField(7)
   final VideoType videoType;
+  
+  @HiveField(8)
   final String? episodeInfo;
+  
+  @HiveField(9)
   final bool isNew;
+  
+  @HiveField(10)
   final String? thumbnailUrl;
+  
+  @HiveField(11)
   final String? description;
 
   Program({
@@ -20,7 +58,7 @@ class Program {
     required this.channelId,
     required this.startTime,
     required this.endTime,
-    required this.duration,
+    required this.durationSeconds,
     required this.videoUrl,
     required this.videoType,
     this.episodeInfo,
@@ -36,7 +74,7 @@ class Program {
       'channelId': channelId,
       'startTime': startTime.toIso8601String(),
       'endTime': endTime.toIso8601String(),
-      'duration': duration.inSeconds,
+      'duration': durationSeconds,
       'videoUrl': videoUrl,
       'videoType': videoType.toString(),
       'episodeInfo': episodeInfo,
@@ -53,7 +91,7 @@ class Program {
       channelId: json['channelId'],
       startTime: DateTime.parse(json['startTime']),
       endTime: DateTime.parse(json['endTime']),
-      duration: Duration(seconds: json['duration']),
+      durationSeconds: json['duration'],
       videoUrl: json['videoUrl'],
       videoType: VideoType.values.firstWhere(
         (e) => e.toString() == json['videoType'],
@@ -72,7 +110,7 @@ class Program {
     String? channelId,
     DateTime? startTime,
     DateTime? endTime,
-    Duration? duration,
+    int? durationSeconds,
     String? videoUrl,
     VideoType? videoType,
     String? episodeInfo,
@@ -86,7 +124,7 @@ class Program {
       channelId: channelId ?? this.channelId,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
-      duration: duration ?? this.duration,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
       videoUrl: videoUrl ?? this.videoUrl,
       videoType: videoType ?? this.videoType,
       episodeInfo: episodeInfo ?? this.episodeInfo,
@@ -101,16 +139,28 @@ class Program {
     return startTime.isBefore(now) && endTime.isAfter(now);
   }
 
+  // Getter for duration
+  Duration get duration => Duration(seconds: durationSeconds);
+
+  // Getter for remaining time
   Duration get remainingTime {
     final now = DateTime.now();
-    if (now.isAfter(endTime)) return Duration.zero;
-    return endTime.difference(now);
+    if (now.isAfter(endTime)) {
+      return Duration.zero;
+    } else if (now.isBefore(startTime)) {
+      return endTime.difference(startTime);
+    } else {
+      return endTime.difference(now);
+    }
   }
 
   String get remainingTimeString {
     final remaining = remainingTime;
-    if (remaining.inMinutes <= 0) return 'ENDED';
-    return '${remaining.inMinutes} MIN LEFT';
+    if (remaining.inHours > 0) {
+      return '${remaining.inHours}h ${remaining.inMinutes % 60}m remaining';
+    } else {
+      return '${remaining.inMinutes}m remaining';
+    }
   }
 
   // Helper method to validate video URL
@@ -162,7 +212,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now(),
     endTime: DateTime.now().add(const Duration(minutes: 30)),
-    duration: const Duration(minutes: 30),
+    durationSeconds: 1800, // 30 minutes
     isNew: true,
   ),
   Program(
@@ -177,7 +227,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now().add(const Duration(minutes: 30)),
     endTime: DateTime.now().add(const Duration(minutes: 60)),
-    duration: const Duration(minutes: 30),
+    durationSeconds: 1800, // 30 minutes
   ),
   Program(
     id: '3',
@@ -191,7 +241,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now().add(const Duration(hours: 1)),
     endTime: DateTime.now().add(const Duration(hours: 1, minutes: 30)),
-    duration: const Duration(minutes: 30),
+    durationSeconds: 1800, // 30 minutes
   ),
   Program(
     id: '4',
@@ -205,7 +255,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now().add(const Duration(hours: 1, minutes: 30)),
     endTime: DateTime.now().add(const Duration(hours: 2)),
-    duration: const Duration(minutes: 30),
+    durationSeconds: 1800, // 30 minutes
   ),
   Program(
     id: '5',
@@ -219,7 +269,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now().add(const Duration(hours: 2)),
     endTime: DateTime.now().add(const Duration(hours: 2, minutes: 30)),
-    duration: const Duration(minutes: 30),
+    durationSeconds: 1800, // 30 minutes
   ),
   Program(
     id: '6',
@@ -233,7 +283,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now().add(const Duration(hours: 2, minutes: 30)),
     endTime: DateTime.now().add(const Duration(hours: 3)),
-    duration: const Duration(minutes: 30),
+    durationSeconds: 1800, // 30 minutes
   ),
   // Alternative URLs if the above don't work
   Program(
@@ -245,7 +295,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now().add(const Duration(hours: 3)),
     endTime: DateTime.now().add(const Duration(hours: 3, minutes: 15)),
-    duration: const Duration(minutes: 15),
+    durationSeconds: 900, // 15 minutes
   ),
   Program(
     id: '8',
@@ -257,7 +307,7 @@ final programs = [
     videoType: VideoType.mp4,
     startTime: DateTime.now().add(const Duration(hours: 3, minutes: 15)),
     endTime: DateTime.now().add(const Duration(hours: 3, minutes: 30)),
-    duration: const Duration(minutes: 15),
+    durationSeconds: 900, // 15 minutes
   ),
 ];
 

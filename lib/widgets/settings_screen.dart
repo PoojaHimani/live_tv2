@@ -1247,7 +1247,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       channelId: selectedChannelId!,
                       startTime: start,
                       endTime: end,
-                      duration: duration,
+                      durationSeconds: duration.inSeconds,
                       videoUrl: hasMp4Url ? url : selectedFilePath!,
                       videoType: VideoType.mp4,
                     );
