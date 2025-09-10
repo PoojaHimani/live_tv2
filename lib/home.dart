@@ -127,7 +127,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'assets/videos/sample1.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S6 E12 - The Label Maker',
       ),
@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 40)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'assets/videos/sample2.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S4 E13 - The Pick',
       ),
@@ -149,7 +149,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 70)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'assets/videos/sample3.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S2 E11 - The Bath Item Gift Hypothesis',
       ),
@@ -160,7 +160,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         durationSeconds: 10800, // 3 hours
-        videoUrl: 'assets/videos/sample4.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -170,7 +170,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 50)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'assets/videos/sample5.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -181,7 +181,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'assets/videos/sample6.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 40)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'assets/videos/sample7.mp4',
+        videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -201,7 +201,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         durationSeconds: 3600, // 1 hour
-        videoUrl: 'assets/videos/sample8.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -211,7 +211,7 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 80)),
         durationSeconds: 3600, // 1 hour
-        videoUrl: 'assets/videos/sample9.mp4',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -221,8 +221,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'cnbc',
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
-        duration: const Duration(hours: 1),
-        videoUrl: 'assets/videos/sample10.mp4',
+        durationSeconds: 3600, // 1 hour
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -231,8 +231,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'cnbc',
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 80)),
-        duration: const Duration(hours: 1),
-        videoUrl: 'assets/videos/sample11.mp4',
+        durationSeconds: 3600, // 1 hour
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         videoType: VideoType.mp4,
       ),
       // Movie programs
@@ -242,8 +242,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'hbo',
         startTime: now.subtract(const Duration(minutes: 30)),
         endTime: now.add(const Duration(minutes: 120)),
-        duration: const Duration(minutes: 150),
-        videoUrl: 'assets/videos/sample12.mp4',
+        durationSeconds: 9000, // 150 minutes
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -253,8 +253,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'netflix',
         startTime: now.add(const Duration(minutes: 120)),
         endTime: now.add(const Duration(minutes: 270)),
-        duration: const Duration(minutes: 150),
-        videoUrl: 'assets/videos/sample13.mp4',
+        durationSeconds: 9000, // 150 minutes
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -263,8 +263,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'disney',
         startTime: now.subtract(const Duration(minutes: 15)),
         endTime: now.add(const Duration(minutes: 90)),
-        duration: const Duration(minutes: 105),
-        videoUrl: 'assets/videos/sample14.mp4',
+        durationSeconds: 6300, // 105 minutes
+        videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
         videoType: VideoType.mp4,
       ),
       // Kids programs
@@ -274,8 +274,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'cartoon_network',
         startTime: now.subtract(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 20)),
-        duration: const Duration(minutes: 30),
-        videoUrl: 'assets/videos/sample15.mp4',
+        durationSeconds: 1800, // 30 minutes
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -284,8 +284,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'nickelodeon',
         startTime: now.subtract(const Duration(minutes: 5)),
         endTime: now.add(const Duration(minutes: 25)),
-        duration: const Duration(minutes: 30),
-        videoUrl: 'assets/videos/sample16.mp4',
+        durationSeconds: 1800, // 30 minutes
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -294,8 +294,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'disney_junior',
         startTime: now.subtract(const Duration(minutes: 8)),
         endTime: now.add(const Duration(minutes: 22)),
-        duration: const Duration(minutes: 30),
-        videoUrl: 'assets/videos/sample17.mp4',
+        durationSeconds: 1800, // 30 minutes
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         videoType: VideoType.mp4,
       ),
       // Additional movie programs
@@ -305,8 +305,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'hbo',
         startTime: now.add(const Duration(minutes: 150)),
         endTime: now.add(const Duration(minutes: 330)),
-        duration: const Duration(minutes: 180),
-        videoUrl: 'assets/videos/sample18.mp4',
+        durationSeconds: 10800, // 180 minutes
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -316,8 +316,8 @@ class _HomePageState extends State<HomePage> {
         channelId: 'disney',
         startTime: now.add(const Duration(minutes: 105)),
         endTime: now.add(const Duration(minutes: 210)),
-        duration: const Duration(minutes: 105),
-        videoUrl: 'assets/videos/sample19.mp4',
+        durationSeconds: 6300, // 105 minutes
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         videoType: VideoType.mp4,
       ),
     ];
@@ -711,7 +711,7 @@ class _HomePageState extends State<HomePage> {
       channelId: channelId,
       startTime: startTime,
       endTime: endTime,
-      duration: const Duration(minutes: 30),
+      durationSeconds: 1800, // 30 minutes
       videoUrl: _getDefaultVideoUrl(channelId),
       videoType: VideoType.mp4,
     );

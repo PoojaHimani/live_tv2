@@ -1,5 +1,4 @@
 import 'package:youtube_player_flutter/youtube_player_flutter.dart' as ytf;
-import 'package:youtube_player_iframe/youtube_player_iframe.dart' as yti;
 
 class YouTubeDebug {
   static void testUrlExtraction(String url) {
@@ -10,9 +9,20 @@ class YouTubeDebug {
     final flutterVideoId = ytf.YoutubePlayer.convertUrlToId(url);
     print('Flutter Player Video ID: $flutterVideoId');
 
-    // Test IFrame player extraction
-    final iframeVideoId = yti.YoutubePlayerController.convertUrlToId(url);
-    print('IFrame Player Video ID: $iframeVideoId');
+    // Test manual extraction as fallback
+    String? manualVideoId;
+    if (url.contains('youtube.com/watch?v=')) {
+      final parts = url.split('v=');
+      if (parts.length > 1) {
+        manualVideoId = parts[1].split('&')[0];
+      }
+    } else if (url.contains('youtu.be/')) {
+      final parts = url.split('youtu.be/');
+      if (parts.length > 1) {
+        manualVideoId = parts[1].split('?')[0];
+      }
+    }
+    print('Manual extraction Video ID: $manualVideoId');
 
     // Check URL patterns
     print('Contains youtube.com: ${url.contains('youtube.com')}');
@@ -20,20 +30,6 @@ class YouTubeDebug {
     print('Contains watch: ${url.contains('watch')}');
     print('Contains v=: ${url.contains('v=')}');
 
-    // Test different URL formats
-    if (url.contains('youtube.com/watch?v=')) {
-      final parts = url.split('v=');
-      if (parts.length > 1) {
-        final videoId = parts[1].split('&')[0];
-        print('Manual extraction video ID: $videoId');
-      }
-    } else if (url.contains('youtu.be/')) {
-      final parts = url.split('youtu.be/');
-      if (parts.length > 1) {
-        final videoId = parts[1].split('?')[0];
-        print('Manual extraction video ID: $videoId');
-      }
-    }
 
     print('=============================');
   }
