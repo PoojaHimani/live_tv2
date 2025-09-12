@@ -22,6 +22,8 @@ class AppState extends ChangeNotifier {
   bool _isAuthenticated = false;
   String _settingsPassword = '1234'; // Default password
   Program? _defaultProgram;
+  Set<String> _selectedChannelIds = <String>{}; // Track selected channels
+  bool _isSelectionMode = false; // Track if we're in selection mode
 
   // Hive box names
   static const String _channelsBoxName = 'channels';
@@ -39,6 +41,9 @@ class AppState extends ChangeNotifier {
   String get selectedCategory => _selectedCategory;
   bool get isAuthenticated => _isAuthenticated;
   Program? get defaultProgram => _defaultProgram;
+  Set<String> get selectedChannelIds => _selectedChannelIds;
+  bool get isSelectionMode => _isSelectionMode;
+  List<Channel> get selectedChannels => _channels.where((channel) => _selectedChannelIds.contains(channel.id)).toList();
 
   // Get channels by category
   List<Channel> getChannelsByCategory(String category) {

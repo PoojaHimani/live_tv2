@@ -820,63 +820,94 @@ class _SettingsScreenState extends State<SettingsScreen>
   // Dialog methods with improved UI
   void _showAddChannelDialog(BuildContext context) {
     final nameController = TextEditingController();
-    final categoryController = TextEditingController();
     final logoController = TextEditingController();
+    String selectedCategory = 'RECENT'; // Default category
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A3F48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Add Channel',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDialogTextField(nameController, 'Channel Name', Icons.tv),
-            const SizedBox(height: 16),
-            _buildDialogTextField(
-              categoryController,
-              'Category',
-              Icons.category,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF2A3F48),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Add Channel',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDialogTextField(nameController, 'Channel Name', Icons.tv),
+              const SizedBox(height: 16),
+              // Category Dropdown
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF1A2F38),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  dropdownColor: const Color(0xFF2A3F48),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.category, color: Color(0xFF4CAF50)),
+                    labelText: 'Category',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'RECENT', child: Text('RECENT')),
+                    DropdownMenuItem(value: 'SPORTS', child: Text('SPORTS')),
+                    DropdownMenuItem(value: 'NEWS', child: Text('NEWS')),
+                    DropdownMenuItem(value: 'MOVIES', child: Text('MOVIES')),
+                    DropdownMenuItem(value: 'KIDS', child: Text('KIDS')),
+                  ],
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        selectedCategory = newValue;
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildDialogTextField(logoController, 'Logo URL', Icons.image),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
-            const SizedBox(height: 16),
-            _buildDialogTextField(logoController, 'Logo URL', Icons.image),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty) {
+                  _showSnackBar('Channel name is required', isError: true);
+                  return;
+                }
+
+                final channel = Channel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: nameController.text.trim(),
+                  category: selectedCategory,
+                  logo: logoController.text.trim(),
+                );
+                context.read<AppState>().addChannel(channel);
+                Navigator.pop(context);
+                _showSnackBar('Channel added successfully');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4CAF50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Add', style: TextStyle(color: Colors.white)),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.trim().isEmpty) {
-                _showSnackBar('Channel name is required', isError: true);
-                return;
-              }
-
-              final channel = Channel(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: nameController.text.trim(),
-                category: categoryController.text.trim(),
-                logo: logoController.text.trim(),
-              );
-              context.read<AppState>().addChannel(channel);
-              Navigator.pop(context);
-              _showSnackBar('Channel added successfully');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4CAF50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }
