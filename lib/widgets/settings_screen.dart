@@ -247,7 +247,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             tabs: const [
               Tab(text: 'Channels'),
               Tab(text: 'Programs'),
-              Tab(text: 'Default'),
+              Tab(text: 'Selected Program'),
               Tab(text: 'Password'),
             ],
           ),
@@ -820,63 +820,102 @@ class _SettingsScreenState extends State<SettingsScreen>
   // Dialog methods with improved UI
   void _showAddChannelDialog(BuildContext context) {
     final nameController = TextEditingController();
-    final categoryController = TextEditingController();
     final logoController = TextEditingController();
+    String selectedCategory = 'RECENT'; // Default category
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A3F48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Add Channel',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDialogTextField(nameController, 'Channel Name', Icons.tv),
-            const SizedBox(height: 16),
-            _buildDialogTextField(
-              categoryController,
-              'Category',
-              Icons.category,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF2A3F48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Add Channel',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDialogTextField(nameController, 'Channel Name', Icons.tv),
+              const SizedBox(height: 16),
+              // Category Dropdown
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF1A2F38),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  dropdownColor: const Color(0xFF2A3F48),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.category,
+                      color: Color(0xFF4CAF50),
+                    ),
+                    labelText: 'Category',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 16,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'RECENT', child: Text('RECENT')),
+                    DropdownMenuItem(value: 'SPORTS', child: Text('SPORTS')),
+                    DropdownMenuItem(value: 'NEWS', child: Text('NEWS')),
+                    DropdownMenuItem(value: 'MOVIES', child: Text('MOVIES')),
+                    DropdownMenuItem(value: 'KIDS', child: Text('KIDS')),
+                  ],
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        selectedCategory = newValue;
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildDialogTextField(logoController, 'Logo URL', Icons.image),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
-            const SizedBox(height: 16),
-            _buildDialogTextField(logoController, 'Logo URL', Icons.image),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty) {
+                  _showSnackBar('Channel name is required', isError: true);
+                  return;
+                }
+
+                final channel = Channel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: nameController.text.trim(),
+                  category: selectedCategory,
+                  logo: logoController.text.trim(),
+                );
+                context.read<AppState>().addChannel(channel);
+                Navigator.pop(context);
+                _showSnackBar('Channel added successfully');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4CAF50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Add', style: TextStyle(color: Colors.white)),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.trim().isEmpty) {
-                _showSnackBar('Channel name is required', isError: true);
-                return;
-              }
-
-              final channel = Channel(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: nameController.text.trim(),
-                category: categoryController.text.trim(),
-                logo: logoController.text.trim(),
-              );
-              context.read<AppState>().addChannel(channel);
-              Navigator.pop(context);
-              _showSnackBar('Channel added successfully');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4CAF50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }
@@ -910,7 +949,103 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   // Implement remaining dialog methods with similar improvements...
   void _showEditChannelDialog(BuildContext context, Channel channel) {
-    // Similar implementation with pre-filled values
+    final nameController = TextEditingController(text: channel.name);
+    final logoController = TextEditingController(text: channel.logo);
+    String selectedCategory = channel.category;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF2A3F48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Edit Channel',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDialogTextField(nameController, 'Channel Name', Icons.tv),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF1A2F38),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  dropdownColor: const Color(0xFF2A3F48),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.category,
+                      color: Color(0xFF4CAF50),
+                    ),
+                    labelText: 'Category',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 16,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'RECENT', child: Text('RECENT')),
+                    DropdownMenuItem(value: 'SPORTS', child: Text('SPORTS')),
+                    DropdownMenuItem(value: 'NEWS', child: Text('NEWS')),
+                    DropdownMenuItem(value: 'MOVIES', child: Text('MOVIES')),
+                    DropdownMenuItem(value: 'KIDS', child: Text('KIDS')),
+                  ],
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        selectedCategory = newValue;
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildDialogTextField(logoController, 'Logo URL', Icons.image),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty) {
+                  _showSnackBar('Channel name is required', isError: true);
+                  return;
+                }
+                final updatedChannel = Channel(
+                  id: channel.id,
+                  name: nameController.text.trim(),
+                  category: selectedCategory,
+                  logo: logoController.text.trim(),
+                );
+                context.read<AppState>().updateChannel(updatedChannel);
+                Navigator.pop(context);
+                _showSnackBar('Channel updated successfully');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4CAF50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Save', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showDeleteChannelDialog(
@@ -1275,47 +1410,308 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   void _showEditProgramDialog(BuildContext context, Program program) {
-    // Implementation for editing programs
-  }
+    final titleController = TextEditingController(text: program.title);
+    final durationController = TextEditingController(
+      text: (program.duration.inMinutes).toString(),
+    );
+    final urlController = TextEditingController(text: program.videoUrl);
+    DateTime selectedDateTime = program.startTime;
+    String selectedChannelId = program.channelId;
+    String? selectedFilePath = program.videoUrl.startsWith('http')
+        ? null
+        : program.videoUrl;
 
-  void _showDeleteProgramDialog(
-    BuildContext context,
-    Program program,
-    AppState appState,
-  ) {
+    Future<void> pickDateTime() async {
+      final now = DateTime.now();
+      final date = await showDatePicker(
+        context: context,
+        initialDate: selectedDateTime,
+        firstDate: DateTime(now.year - 1),
+        lastDate: DateTime(now.year + 5),
+        builder: (context, child) => Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF4CAF50),
+              surface: Color(0xFF2A3F48),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (date == null) return;
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+        builder: (context, child) => Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF4CAF50),
+              surface: Color(0xFF2A3F48),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (time == null) return;
+      selectedDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    }
+
+    Future<void> pickMp4() async {
+      try {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['mp4'],
+        );
+        if (result != null && result.files.isNotEmpty) {
+          selectedFilePath = result.files.single.path;
+        }
+      } catch (_) {
+        _showSnackBar('Failed to pick file', isError: true);
+      }
+    }
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A3F48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Delete Program',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${program.title}"? This action cannot be undone.',
-          style: const TextStyle(color: Colors.white),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              appState.deleteProgram(program.id);
-              Navigator.pop(context);
-              _showSnackBar('Program deleted successfully');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+      builder: (context) => Consumer<AppState>(
+        builder: (context, appState, child) {
+          return StatefulBuilder(
+            builder: (context, setLocalState) => AlertDialog(
+              backgroundColor: const Color(0xFF2A3F48),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
               ),
+              title: const Text(
+                'Edit Program',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDialogTextField(
+                      titleController,
+                      'Program Name',
+                      Icons.movie_creation_outlined,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedChannelId,
+                      dropdownColor: const Color(0xFF1A2F38),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Icons.tv,
+                          color: Color(0xFF4CAF50),
+                        ),
+                        labelText: 'Select Channel',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4CAF50)),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF1A2F38),
+                      ),
+                      iconEnabledColor: Colors.white,
+                      style: const TextStyle(color: Colors.white),
+                      items: appState.channels
+                          .map(
+                            (c) => DropdownMenuItem<String>(
+                              value: c.id,
+                              child: Text(
+                                c.name,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setLocalState(() => selectedChannelId = value!);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        await pickDateTime();
+                        setLocalState(() {});
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.event,
+                            color: Color(0xFF4CAF50),
+                          ),
+                          labelText: 'Select Start Date & Time',
+                          labelStyle: const TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFF4CAF50)),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFF1A2F38),
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            DateFormat(
+                              'MMM dd, yyyy h:mm a',
+                            ).format(selectedDateTime),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField(
+                      durationController,
+                      'Duration (minutes)',
+                      Icons.timer,
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        await pickMp4();
+                        setLocalState(() {});
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.attach_file,
+                            color: Color(0xFF4CAF50),
+                          ),
+                          labelText: 'Choose MP4 File',
+                          labelStyle: const TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFF4CAF50)),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFF1A2F38),
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            selectedFilePath == null
+                                ? 'Tap to choose .mp4'
+                                : selectedFilePath!,
+                            style: const TextStyle(color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('or', style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 12),
+                    _buildDialogTextField(
+                      urlController,
+                      'MP4 URL (optional)',
+                      Icons.link,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (titleController.text.trim().isEmpty) {
+                      _showSnackBar('Program name is required', isError: true);
+                      return;
+                    }
+                    if (selectedChannelId.isEmpty) {
+                      _showSnackBar('Please select a channel', isError: true);
+                      return;
+                    }
+                    final durationMinutes = int.tryParse(
+                      durationController.text.trim(),
+                    );
+                    if (durationMinutes == null || durationMinutes <= 0) {
+                      _showSnackBar(
+                        'Enter a valid duration in minutes',
+                        isError: true,
+                      );
+                      return;
+                    }
+                    final url = urlController.text.trim();
+                    final hasLocalFile =
+                        selectedFilePath != null &&
+                        (selectedFilePath!.toLowerCase().endsWith('.mp4') ||
+                            selectedFilePath!.startsWith('blob:'));
+                    final hasMp4Url =
+                        url.isNotEmpty && url.toLowerCase().startsWith('http');
+                    if (!hasLocalFile && !hasMp4Url) {
+                      _showSnackBar(
+                        'Please choose an MP4 file or enter a valid HTTP URL',
+                        isError: true,
+                      );
+                      return;
+                    }
+
+                    final start = selectedDateTime;
+                    final duration = Duration(minutes: durationMinutes);
+                    final end = start.add(duration);
+
+                    final updatedProgram = Program(
+                      id: program.id,
+                      title: titleController.text.trim(),
+                      channelId: selectedChannelId,
+                      startTime: start,
+                      endTime: end,
+                      durationSeconds: duration.inSeconds,
+                      videoUrl: hasMp4Url ? url : selectedFilePath!,
+                      videoType: VideoType.mp4,
+                    );
+                    context.read<AppState>().updateProgram(updatedProgram);
+                    Navigator.pop(context);
+                    _showSnackBar('Program updated successfully');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4CAF50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -1413,5 +1809,47 @@ class _SettingsScreenState extends State<SettingsScreen>
     if (appState.defaultProgram != null) {
       _showEditProgramDialog(context, appState.defaultProgram!);
     }
+  }
+
+  void _showDeleteProgramDialog(
+    BuildContext context,
+    Program program,
+    AppState appState,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF2A3F48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Delete Program',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${program.title}"? This action cannot be undone.',
+          style: const TextStyle(color: Colors.white),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              appState.deleteProgram(program.id);
+              Navigator.pop(context);
+              _showSnackBar('Program deleted successfully');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 }

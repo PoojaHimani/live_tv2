@@ -30,7 +30,6 @@ class YouTubeDebug {
     print('Contains watch: ${url.contains('watch')}');
     print('Contains v=: ${url.contains('v=')}');
 
-
     print('=============================');
   }
 

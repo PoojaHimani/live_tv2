@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     // Load stored data first, then ensure base data exists without overwriting user additions
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = context.read<AppState>();
-
+      
       // Load data from Hive first
       await appState.loadData();
 
@@ -398,7 +398,7 @@ class _HomePageState extends State<HomePage> {
           builder: (context, appState, child) {
             return Row(
               children: [
-                // Left Navigation Menu
+                // Left Navigation Menu with vertical scrolling
                 Container(
                   width: 200,
                   color: const Color(0xFF1A2F38),
@@ -408,35 +408,42 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     children: [
                       const SizedBox(height: 60),
-                      _buildNavigationItem(
-                        'ALL CHANNELS',
-                        appState.selectedCategory == 'ALL CHANNELS',
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              _buildNavigationItem(
+                                'ALL CHANNELS',
+                                appState.selectedCategory == 'ALL CHANNELS',
+                              ),
+                              _buildNavigationItem(
+                                'MY CHANNELS',
+                                appState.selectedCategory == 'MY CHANNELS',
+                              ),
+                              _buildNavigationItem(
+                                'RECENT',
+                                appState.selectedCategory == 'RECENT',
+                              ),
+                              _buildNavigationItem(
+                                'SPORTS',
+                                appState.selectedCategory == 'SPORTS',
+                              ),
+                              _buildNavigationItem(
+                                'NEWS',
+                                appState.selectedCategory == 'NEWS',
+                              ),
+                              _buildNavigationItem(
+                                'MOVIES',
+                                appState.selectedCategory == 'MOVIES',
+                              ),
+                              _buildNavigationItem(
+                                'KIDS',
+                                appState.selectedCategory == 'KIDS',
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      _buildNavigationItem(
-                        'MY CHANNELS',
-                        appState.selectedCategory == 'MY CHANNELS',
-                      ),
-                      _buildNavigationItem(
-                        'RECENT',
-                        appState.selectedCategory == 'RECENT',
-                      ),
-                      _buildNavigationItem(
-                        'SPORTS',
-                        appState.selectedCategory == 'SPORTS',
-                      ),
-                      _buildNavigationItem(
-                        'NEWS',
-                        appState.selectedCategory == 'NEWS',
-                      ),
-                      _buildNavigationItem(
-                        'MOVIES',
-                        appState.selectedCategory == 'MOVIES',
-                      ),
-                      _buildNavigationItem(
-                        'KIDS',
-                        appState.selectedCategory == 'KIDS',
-                      ),
-                      const Spacer(),
                       // Debug info
                       Container(
                         padding: const EdgeInsets.all(8),
@@ -631,68 +638,84 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: channels.length,
-      shrinkWrap: true, // Added to prevent overflow
-      itemBuilder: (context, index) {
-        final channel = channels[index];
-        final programs = appState.getProgramsForChannel(channel.id);
-
-        return _buildChannelRow(channel, programs);
-      },
+    return SingleChildScrollView(
+      child: Column(
+        children: channels.map((channel) {
+          final programs = appState.getProgramsForChannel(channel.id);
+          return _buildChannelRow(channel, programs);
+        }).toList(),
+      ),
     );
   }
 
   Widget _buildChannelRow(Channel channel, List<Program> programs) {
     return Container(
-      height: 100, // Reduced from 120 to prevent overflow
-      margin: const EdgeInsets.only(bottom: 10),
+      height: 85, // Reduced height to match program slots
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       child: Row(
         children: [
-          // Channel logo
+          // Channel logo - reduced width
           Container(
-            width: 120,
-            height: 80,
-            margin: const EdgeInsets.only(right: 20),
+            width: 90,
+            height: 75,
+            margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
               color: Colors.black,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
               child: Text(
                 channel.logo.toUpperCase(),
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
-          // Program timeline
+          // Program timeline with horizontal scrolling
           Expanded(
-            child: Row(
-              children: [
-                _buildProgramSlot(
-                  programs.isNotEmpty
-                      ? programs[0]
-                      : _getDefaultProgram(channel.id, 0),
-                  channel.id,
-                ),
-                _buildProgramSlot(
-                  programs.length > 1
-                      ? programs[1]
-                      : _getDefaultProgram(channel.id, 1),
-                  channel.id,
-                ),
-                _buildProgramSlot(
-                  programs.length > 2
-                      ? programs[2]
-                      : _getDefaultProgram(channel.id, 2),
-                  channel.id,
-                ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildProgramSlot(
+                    programs.isNotEmpty
+                        ? programs[0]
+                        : _getDefaultProgram(channel.id, 0),
+                    channel.id,
+                  ),
+                  _buildProgramSlot(
+                    programs.length > 1
+                        ? programs[1]
+                        : _getDefaultProgram(channel.id, 1),
+                    channel.id,
+                  ),
+                  _buildProgramSlot(
+                    programs.length > 2
+                        ? programs[2]
+                        : _getDefaultProgram(channel.id, 2),
+                    channel.id,
+                  ),
+                  // Add more program slots for extended timeline
+                  _buildProgramSlot(
+                    programs.length > 3
+                        ? programs[3]
+                        : _getDefaultProgram(channel.id, 3),
+                    channel.id,
+                  ),
+                  _buildProgramSlot(
+                    programs.length > 4
+                        ? programs[4]
+                        : _getDefaultProgram(channel.id, 4),
+                    channel.id,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -749,29 +772,29 @@ class _HomePageState extends State<HomePage> {
   String _getDefaultVideoUrl(String channelId) {
     switch (channelId) {
       case 'tbs':
-        return 'assets/videos/sample1.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
       case 'fox_sports':
-        return 'assets/videos/sample2.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4';
       case 'food_network':
-        return 'assets/videos/sample3.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
       case 'cbs':
-        return 'assets/videos/sample4.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4';
       case 'cnbc':
-        return 'assets/videos/sample5.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4';
       case 'hbo':
-        return 'assets/videos/sample6.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4';
       case 'netflix':
-        return 'assets/videos/sample7.mp4';
+        return 'https://www.w3schools.com/html/mov_bbb.mp4';
       case 'disney':
-        return 'assets/videos/sample8.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
       case 'cartoon_network':
-        return 'assets/videos/sample9.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4';
       case 'nickelodeon':
-        return 'assets/videos/sample10.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
       case 'disney_junior':
-        return 'assets/videos/sample11.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4';
       default:
-        return 'assets/videos/sample1.mp4';
+        return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
     }
   }
 
@@ -780,29 +803,28 @@ class _HomePageState extends State<HomePage> {
     final actualProgram = program ?? _getDefaultProgram(channelId, 0);
     final isCurrentlyPlaying = actualProgram.isCurrentlyPlaying;
 
-    return Expanded(
+    return Container(
+      width: 180, // Reduced width to fit better
+      height: 75, // Fixed height to prevent overflow
+      margin: const EdgeInsets.only(right: 8),
       child: GestureDetector(
         onTap: () => _playProgram(actualProgram),
         child: Container(
-          height: 80,
-          margin: const EdgeInsets.only(right: 10),
-          constraints: const BoxConstraints(maxHeight: 80), // Added constraint
           decoration: BoxDecoration(
             color: isCurrentlyPlaying
                 ? const Color(0xFF2196F3)
                 : Colors.grey[800],
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             border: isCurrentlyPlaying
                 ? Border.all(color: const Color(0xFF4CAF50), width: 2)
                 : null,
           ),
-          padding: const EdgeInsets.all(
-            8,
-          ), // Reduced padding to prevent overflow
+          padding: const EdgeInsets.all(6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // Added to prevent overflow
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Title row with NEW badge
               Row(
                 children: [
                   Expanded(
@@ -810,7 +832,7 @@ class _HomePageState extends State<HomePage> {
                       actualProgram.title,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 13, // Reduced font size
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -819,45 +841,42 @@ class _HomePageState extends State<HomePage> {
                   ),
                   if (actualProgram.isNew)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4, // Reduced padding
-                        vertical: 1, // Reduced padding
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                       decoration: BoxDecoration(
                         color: Colors.red,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
                         'NEW',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 8, // Reduced font size
+                          fontSize: 7,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 2), // Reduced spacing
+              // Time info
               Text(
-                '${_formatTime(actualProgram.startTime)} - ${_formatTime(actualProgram.endTime)} • ${actualProgram.remainingTimeString}',
+                '${_formatTime(actualProgram.startTime)} - ${_formatTime(actualProgram.endTime)}',
                 style: TextStyle(
                   color: Colors.grey[300],
-                  fontSize: 11,
-                ), // Reduced font size
-              ),
-              if (actualProgram.episodeInfo != null) ...[
-                const SizedBox(height: 2), // Reduced spacing
-                Text(
-                  actualProgram.episodeInfo!,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 10,
-                  ), // Reduced font size
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  fontSize: 10,
                 ),
-              ],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              // Remaining time
+              Text(
+                actualProgram.remainingTimeString,
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 9,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
