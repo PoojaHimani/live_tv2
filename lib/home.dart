@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import 'models/app_state.dart';
 import 'models/channel.dart';
 import 'models/program.dart';
@@ -18,11 +19,16 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late DateTime _currentTime;
   late Timer _timer;
+  // Shared horizontal controller so header and program rows stay aligned
+  late ScrollController _horizontalController;
+  // Number of 30-minute slots to render (48 -> 24 hours)
+  static const int _slotCount = 48;
 
   @override
   void initState() {
     super.initState();
     _currentTime = DateTime.now();
+    _horizontalController = ScrollController();
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
@@ -32,7 +38,7 @@ class _HomePageState extends State<HomePage> {
     // Load stored data first, then ensure base data exists without overwriting user additions
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = context.read<AppState>();
-      
+
       // Load data from Hive first
       await appState.loadData();
 
@@ -49,9 +55,45 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Compute a base start time used for header slots and scroll positioning.
+  DateTime _computeBaseStart(AppState appState) {
+    // For day view, start at the beginning of today (midnight) so the user can
+    // scroll through the full 24 hours. If you want to support other dates,
+    // expose a selectedDate in AppState and use that here.
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, 0, 0);
+  }
+
+  // Scroll the shared horizontal controller to show current time for the computed base
+  void _scrollToCurrentTime(AppState appState) {
+    if (!mounted) return;
+    if (!_horizontalController.hasClients) return;
+
+    const double tileWidth = 180.0;
+    const double tileRightMargin = 8.0;
+    final double slotWidth = tileWidth + tileRightMargin;
+
+    final baseStart = _computeBaseStart(appState);
+    final left = _getCurrentTimeLeft(baseStart, slotWidth);
+
+    // aim to center current time a bit into the view
+    final viewportWidth = _horizontalController.position.viewportDimension;
+    final target = (left - viewportWidth / 3).clamp(
+      0.0,
+      _horizontalController.position.maxScrollExtent,
+    );
+
+    _horizontalController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
+  }
+
   @override
   void dispose() {
     _timer.cancel();
+    _horizontalController.dispose();
     super.dispose();
   }
 
@@ -127,7 +169,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S6 E12 - The Label Maker',
       ),
@@ -138,7 +181,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 40)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S4 E13 - The Pick',
       ),
@@ -149,7 +193,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 70)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         videoType: VideoType.mp4,
         episodeInfo: 'S2 E11 - The Bath Item Gift Hypothesis',
       ),
@@ -160,7 +205,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         durationSeconds: 10800, // 3 hours
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -170,7 +216,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 50)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -181,7 +228,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 10)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -201,7 +249,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         durationSeconds: 3600, // 1 hour
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -211,7 +260,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 80)),
         durationSeconds: 3600, // 1 hour
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -222,7 +272,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 40)),
         endTime: now.add(const Duration(minutes: 20)),
         durationSeconds: 3600, // 1 hour
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -232,7 +283,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 20)),
         endTime: now.add(const Duration(minutes: 80)),
         durationSeconds: 3600, // 1 hour
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         videoType: VideoType.mp4,
       ),
       // Movie programs
@@ -243,7 +295,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 30)),
         endTime: now.add(const Duration(minutes: 120)),
         durationSeconds: 9000, // 150 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -254,7 +307,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 120)),
         endTime: now.add(const Duration(minutes: 270)),
         durationSeconds: 9000, // 150 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -275,7 +329,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 10)),
         endTime: now.add(const Duration(minutes: 20)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -285,7 +340,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 5)),
         endTime: now.add(const Duration(minutes: 25)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         videoType: VideoType.mp4,
       ),
       Program(
@@ -295,7 +351,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.subtract(const Duration(minutes: 8)),
         endTime: now.add(const Duration(minutes: 22)),
         durationSeconds: 1800, // 30 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         videoType: VideoType.mp4,
       ),
       // Additional movie programs
@@ -306,7 +363,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 150)),
         endTime: now.add(const Duration(minutes: 330)),
         durationSeconds: 10800, // 180 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         videoType: VideoType.mp4,
         isNew: true,
       ),
@@ -317,7 +375,8 @@ class _HomePageState extends State<HomePage> {
         startTime: now.add(const Duration(minutes: 105)),
         endTime: now.add(const Duration(minutes: 210)),
         durationSeconds: 6300, // 105 minutes
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         videoType: VideoType.mp4,
       ),
     ];
@@ -396,7 +455,7 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Consumer<AppState>(
           builder: (context, appState, child) {
-            return Row(
+            final content = Row(
               children: [
                 // Left Navigation Menu with vertical scrolling
                 Container(
@@ -476,7 +535,7 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     children: [
                       // Header with time and timeline
-                      _buildHeader(),
+                      _buildHeader(appState),
                       // Program grid
                       Expanded(child: _buildProgramGrid(appState)),
                     ],
@@ -484,6 +543,13 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             );
+
+            // After the widgets have been laid out, auto-scroll the timeline to the current time
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scrollToCurrentTime(appState);
+            });
+
+            return content;
           },
         ),
       ),
@@ -518,20 +584,47 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppState appState) {
     final timeFormat = DateFormat('h:mma');
     final dateFormat = DateFormat('EEE MMM d');
+
+    // The program tiles use a fixed width + margin. Keep the header slots the same
+    const double tileWidth = 180.0;
+    const double tileRightMargin = 8.0;
+    const double slotWidth = tileWidth + tileRightMargin;
+    // use class-level _slotCount so header and rows match
+    final int slotCount = _slotCount;
+
+    // Compute base start time from the earliest program start across all programs
+    DateTime baseStart;
+    if (appState.programs.isEmpty) {
+      baseStart = DateTime.now();
+    } else {
+      final earliest = appState.programs
+          .map((p) => p.startTime)
+          .reduce((a, b) => a.isBefore(b) ? a : b);
+      // Snap down to nearest 30-minute boundary so labels match 30min slots
+      final minute = earliest.minute;
+      final snappedMinute = minute - (minute % 30);
+      baseStart = DateTime(
+        earliest.year,
+        earliest.month,
+        earliest.day,
+        earliest.hour,
+        snappedMinute,
+      );
+    }
 
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      constraints: const BoxConstraints(maxHeight: 80), // Added constraint
+      constraints: const BoxConstraints(maxHeight: 80),
       child: Row(
         children: [
           // Current time and date
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // Added to prevent overflow
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 timeFormat.format(_currentTime),
@@ -548,23 +641,44 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const SizedBox(width: 40),
-          // Timeline
+          // Timeline - horizontally scrollable and synced with program rows
           Expanded(
             child: Stack(
               children: [
-                Row(
-                  children: [
-                    _buildTimeSlot('7:00PM'),
-                    _buildTimeSlot('7:30PM'),
-                    _buildTimeSlot('8:00PM'),
-                  ],
+                SingleChildScrollView(
+                  controller: _horizontalController,
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(slotCount, (index) {
+                      final slotTime = baseStart.add(
+                        Duration(minutes: index * 30),
+                      );
+                      return Container(
+                        width: slotWidth,
+                        alignment: Alignment.center,
+                        child: Text(
+                          timeFormat.format(slotTime),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
                 ),
-                // Current time indicator
+                // Current time indicator (positioned in pixels relative to baseStart)
                 Positioned(
-                  left: _getCurrentTimePosition(),
+                  left: math.min(
+                    _getCurrentTimeLeft(baseStart, slotWidth),
+                    slotWidth * slotCount - 4,
+                  ),
+                  top: 8,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, // Added to prevent overflow
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      const SizedBox(height: 4),
                       const Icon(
                         Icons.flash_on,
                         color: Color(0xFF4CAF50),
@@ -572,7 +686,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       Container(
                         width: 2,
-                        height: 60,
+                        height: 56,
                         color: const Color(0xFF4CAF50),
                       ),
                     ],
@@ -586,37 +700,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildTimeSlot(String time) {
-    return Expanded(
-      child: Text(
-        time,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  double _getCurrentTimePosition() {
+  // Returns the left offset in pixels for the current time relative to a given base start and slot width
+  double _getCurrentTimeLeft(DateTime baseStart, double slotWidth) {
     final now = _currentTime;
-    final startOfHour = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      19,
-      0,
-    ); // 7:00 PM
-    final endOfHour = DateTime(now.year, now.month, now.day, 20, 0); // 8:00 PM
-
-    if (now.isBefore(startOfHour)) return 0;
-    if (now.isAfter(endOfHour)) return 1;
-
-    final totalDuration = endOfHour.difference(startOfHour);
-    final currentDuration = now.difference(startOfHour);
-    return currentDuration.inMilliseconds / totalDuration.inMilliseconds;
+    final diff = now.difference(baseStart);
+    // If current time is before the baseStart, keep indicator at start
+    if (diff.isNegative) return 0.0;
+    final totalSeconds = diff.inSeconds;
+    // Each slot represents 30 minutes = 1800 seconds
+    final pxPerSecond = slotWidth / 1800.0;
+    final left = totalSeconds * pxPerSecond;
+    // Clamp so it doesn't go beyond the total slots width
+    final maxLeft = slotWidth * _slotCount;
+    return math.min(left, maxLeft - 4);
   }
 
   Widget _buildProgramGrid(AppState appState) {
@@ -642,19 +738,26 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         children: channels.map((channel) {
           final programs = appState.getProgramsForChannel(channel.id);
-          return _buildChannelRow(channel, programs);
+          return _buildChannelRow(channel, programs, appState);
         }).toList(),
       ),
     );
   }
 
-  Widget _buildChannelRow(Channel channel, List<Program> programs) {
+  Widget _buildChannelRow(
+    Channel channel,
+    List<Program> programs,
+    AppState appState,
+  ) {
+    // channel row build - no scheduling here (scroll is scheduled centrally)
+    final baseStart = _computeBaseStart(appState);
+
     return Container(
       height: 85, // Reduced height to match program slots
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       child: Row(
         children: [
-          // Channel logo - reduced width
+          // Channel logo - show image (network or asset) with fallback
           Container(
             width: 90,
             height: 75,
@@ -664,62 +767,133 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
-              child: Text(
-                channel.logo.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Builder(
+                builder: (context) {
+                  final logo = channel.logo;
+                  if (logo.isEmpty) {
+                    return const Text(
+                      'NO LOGO',
+                      style: TextStyle(color: Colors.white, fontSize: 10),
+                    );
+                  }
+
+                  // If it looks like a URL, try network image
+                  if (logo.startsWith('http://') ||
+                      logo.startsWith('https://')) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.network(
+                        logo,
+                        width: 80,
+                        height: 65,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, error, stack) {
+                          final display = (channel.name.isNotEmpty)
+                              ? channel.name
+                              : channel.id;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            child: Center(
+                              child: Text(
+                                display,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+
+                  // Prefer loading a local asset named assets/logos/<logo>.png
+                  final assetPath = 'assets/logos/$logo.png';
+                  return Image.asset(
+                    assetPath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback: show the channel name when asset missing
+                      final display = (channel.name.isNotEmpty)
+                          ? channel.name
+                          : channel.id;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Center(
+                          child: Text(
+                            display,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ),
-          // Program timeline with horizontal scrolling
+          // Program timeline with horizontal scrolling (shared controller to sync with header)
           Expanded(
             child: SingleChildScrollView(
+              controller: _horizontalController,
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: [
-                  _buildProgramSlot(
-                    programs.isNotEmpty
-                        ? programs[0]
-                        : _getDefaultProgram(channel.id, 0),
+                children: List.generate(_slotCount, (index) {
+                  final slotStart = baseStart.add(
+                    Duration(minutes: index * 30),
+                  );
+                  final programForSlot = _findProgramForSlot(
                     channel.id,
-                  ),
-                  _buildProgramSlot(
-                    programs.length > 1
-                        ? programs[1]
-                        : _getDefaultProgram(channel.id, 1),
-                    channel.id,
-                  ),
-                  _buildProgramSlot(
-                    programs.length > 2
-                        ? programs[2]
-                        : _getDefaultProgram(channel.id, 2),
-                    channel.id,
-                  ),
-                  // Add more program slots for extended timeline
-                  _buildProgramSlot(
-                    programs.length > 3
-                        ? programs[3]
-                        : _getDefaultProgram(channel.id, 3),
-                    channel.id,
-                  ),
-                  _buildProgramSlot(
-                    programs.length > 4
-                        ? programs[4]
-                        : _getDefaultProgram(channel.id, 4),
-                    channel.id,
-                  ),
-                ],
+                    slotStart,
+                    appState,
+                  );
+                  return _buildProgramSlot(programForSlot, channel.id);
+                }),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // Find a program for the channel that covers the given slot start time.
+  // If none is found, return a default 30-minute program starting at slotStart.
+  Program _findProgramForSlot(
+    String channelId,
+    DateTime slotStart,
+    AppState appState,
+  ) {
+    final slotEnd = slotStart.add(const Duration(minutes: 30));
+    final programs = appState.getProgramsForChannel(channelId);
+    for (final p in programs) {
+      if (!p.startTime.isAfter(slotStart) && p.endTime.isAfter(slotStart)) {
+        return p;
+      }
+    }
+    return Program(
+      id: 'default_${channelId}_${slotStart.toIso8601String()}',
+      title: _getDefaultProgramTitle(channelId),
+      channelId: channelId,
+      startTime: slotStart,
+      endTime: slotEnd,
+      durationSeconds: 1800,
+      videoUrl: _getDefaultVideoUrl(channelId),
+      videoType: VideoType.mp4,
     );
   }
 
@@ -841,7 +1015,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                   if (actualProgram.isNew)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 3,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(4),
@@ -860,20 +1037,14 @@ class _HomePageState extends State<HomePage> {
               // Time info
               Text(
                 '${_formatTime(actualProgram.startTime)} - ${_formatTime(actualProgram.endTime)}',
-                style: TextStyle(
-                  color: Colors.grey[300],
-                  fontSize: 10,
-                ),
+                style: TextStyle(color: Colors.grey[300], fontSize: 10),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               // Remaining time
               Text(
                 actualProgram.remainingTimeString,
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 9,
-                ),
+                style: TextStyle(color: Colors.grey[400], fontSize: 9),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -904,10 +1075,5 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showSettings(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SettingsScreen()),
-    );
-  }
+  // settings navigation handled in AppBar actions
 }

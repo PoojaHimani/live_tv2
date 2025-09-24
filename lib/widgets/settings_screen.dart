@@ -881,7 +881,11 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              _buildDialogTextField(logoController, 'Logo URL', Icons.image),
+              _buildDialogTextField(
+                logoController,
+                'Logo (URL or asset name)',
+                Icons.image,
+              ),
             ],
           ),
           actions: [
