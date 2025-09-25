@@ -677,29 +677,34 @@ class _HomePageState extends State<HomePage> {
                 return ClipRect(
                   child: Stack(
                     children: [
-                      Transform.translate(
-                        offset: Offset(-remainder, 0),
-                        child: SizedBox(
-                          width: viewportWidth + slotWidth,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: List.generate(visibleSlots + 1, (i) {
-                              final DateTime slotTime = firstVisibleTime.add(
-                                Duration(minutes: i * 30),
-                              );
-                              return Container(
-                                width: slotWidth,
-                                alignment: Alignment.center,
-                                child: Text(
-                                  timeFormat.format(slotTime),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                      OverflowBox(
+                        minWidth: 0,
+                        maxWidth: double.infinity,
+                        alignment: Alignment.topLeft,
+                        child: Transform.translate(
+                          offset: Offset(-remainder, 0),
+                          child: SizedBox(
+                            width: viewportWidth + slotWidth,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(visibleSlots + 1, (i) {
+                                final DateTime slotTime = firstVisibleTime.add(
+                                  Duration(minutes: i * 30),
+                                );
+                                return Container(
+                                  width: slotWidth,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    timeFormat.format(slotTime),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                              );
-                            }),
+                                );
+                              }),
+                            ),
                           ),
                         ),
                       ),
