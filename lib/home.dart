@@ -23,12 +23,20 @@ class _HomePageState extends State<HomePage> {
   late ScrollController _horizontalController;
   // Number of 30-minute slots to render (48 -> 24 hours)
   static const int _slotCount = 48;
+  // Track current horizontal scroll offset to render a fixed header synced with grid
+  double _scrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
     _currentTime = DateTime.now();
     _horizontalController = ScrollController();
+    _horizontalController.addListener(() {
+      if (!mounted) return;
+      setState(() {
+        _scrollOffset = _horizontalController.offset;
+      });
+    });
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
@@ -57,17 +65,23 @@ class _HomePageState extends State<HomePage> {
 
   // Compute a base start time used for header slots and scroll positioning.
   DateTime _computeBaseStart(AppState appState) {
-    // For day view, start at the beginning of today (midnight) so the user can
-    // scroll through the full 24 hours. If you want to support other dates,
-    // expose a selectedDate in AppState and use that here.
+    // Start from the current half-hour block so we show only current and upcoming content
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 0, 0);
+    final int snappedMinute = now.minute - (now.minute % 30);
+    return DateTime(now.year, now.month, now.day, now.hour, snappedMinute);
   }
 
   // Scroll the shared horizontal controller to show current time for the computed base
-  void _scrollToCurrentTime(AppState appState) {
+  void _scrollToCurrentTime(AppState appState, {int attempt = 0}) {
     if (!mounted) return;
-    if (!_horizontalController.hasClients) return;
+    if (!_horizontalController.hasClients) {
+      if (attempt < 10) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToCurrentTime(appState, attempt: attempt + 1);
+        });
+      }
+      return;
+    }
 
     const double tileWidth = 180.0;
     const double tileRightMargin = 8.0;
@@ -78,10 +92,21 @@ class _HomePageState extends State<HomePage> {
 
     // aim to center current time a bit into the view
     final viewportWidth = _horizontalController.position.viewportDimension;
-    final target = (left - viewportWidth / 3).clamp(
-      0.0,
-      _horizontalController.position.maxScrollExtent,
-    );
+    final maxExtent = _horizontalController.position.maxScrollExtent;
+    if (viewportWidth == 0 || maxExtent == 0) {
+      if (attempt < 10) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToCurrentTime(appState, attempt: attempt + 1);
+        });
+      }
+      return;
+    }
+    final target = (left - viewportWidth / 3).clamp(0.0, maxExtent);
+
+    // Update header immediately to the target position so labels reflect real time
+    setState(() {
+      _scrollOffset = target;
+    });
 
     _horizontalController.animateTo(
       target,
@@ -594,26 +619,8 @@ class _HomePageState extends State<HomePage> {
     const double slotWidth = tileWidth + tileRightMargin;
     // use class-level _slotCount so header and rows match
     final int slotCount = _slotCount;
-
-    // Compute base start time from the earliest program start across all programs
-    DateTime baseStart;
-    if (appState.programs.isEmpty) {
-      baseStart = DateTime.now();
-    } else {
-      final earliest = appState.programs
-          .map((p) => p.startTime)
-          .reduce((a, b) => a.isBefore(b) ? a : b);
-      // Snap down to nearest 30-minute boundary so labels match 30min slots
-      final minute = earliest.minute;
-      final snappedMinute = minute - (minute % 30);
-      baseStart = DateTime(
-        earliest.year,
-        earliest.month,
-        earliest.day,
-        earliest.hour,
-        snappedMinute,
-      );
-    }
+    // Use the same base start as the grid so header and programs align
+    final DateTime baseStart = _computeBaseStart(appState);
 
     return Container(
       height: 80,
@@ -641,58 +648,85 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const SizedBox(width: 40),
-          // Timeline - horizontally scrollable and synced with program rows
+          // Timeline - NOT scrollable; labels sync with program grid scroll
           Expanded(
-            child: Stack(
-              children: [
-                SingleChildScrollView(
-                  controller: _horizontalController,
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List.generate(slotCount, (index) {
-                      final slotTime = baseStart.add(
-                        Duration(minutes: index * 30),
-                      );
-                      return Container(
-                        width: slotWidth,
-                        alignment: Alignment.center,
-                        child: Text(
-                          timeFormat.format(slotTime),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double viewportWidth = constraints.maxWidth;
+                final int visibleSlots = (viewportWidth / slotWidth).ceil() + 1;
+                final int firstVisibleIndex = (_scrollOffset / slotWidth)
+                    .floor()
+                    .clamp(0, slotCount - 1);
+                final DateTime firstVisibleTime = baseStart.add(
+                  Duration(minutes: firstVisibleIndex * 30),
+                );
+
+                final double currentLeftGlobal = _getCurrentTimeLeft(
+                  baseStart,
+                  slotWidth,
+                );
+                final double currentLeftInHeader =
+                    (currentLeftGlobal - _scrollOffset).clamp(
+                      0.0,
+                      viewportWidth - 4,
+                    );
+
+                // Align labels precisely above tile boundaries by shifting remainder
+                final double remainder = _scrollOffset % slotWidth;
+
+                return ClipRect(
+                  child: Stack(
+                    children: [
+                      Transform.translate(
+                        offset: Offset(-remainder, 0),
+                        child: SizedBox(
+                          width: viewportWidth + slotWidth,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(visibleSlots + 1, (i) {
+                              final DateTime slotTime = firstVisibleTime.add(
+                                Duration(minutes: i * 30),
+                              );
+                              return Container(
+                                width: slotWidth,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  timeFormat.format(slotTime),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            }),
                           ),
                         ),
-                      );
-                    }),
-                  ),
-                ),
-                // Current time indicator (positioned in pixels relative to baseStart)
-                Positioned(
-                  left: math.min(
-                    _getCurrentTimeLeft(baseStart, slotWidth),
-                    slotWidth * slotCount - 4,
-                  ),
-                  top: 8,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 4),
-                      const Icon(
-                        Icons.flash_on,
-                        color: Color(0xFF4CAF50),
-                        size: 20,
                       ),
-                      Container(
-                        width: 2,
-                        height: 56,
-                        color: const Color(0xFF4CAF50),
+                      // Current time indicator relative to visible viewport (fits within 60px content height)
+                      Positioned(
+                        left: currentLeftInHeader,
+                        top: 0,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.flash_on,
+                              color: Color(0xFF4CAF50),
+                              size: 16,
+                            ),
+                            Container(
+                              width: 2,
+                              height: 44,
+                              color: const Color(0xFF4CAF50),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ],
