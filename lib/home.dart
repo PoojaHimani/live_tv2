@@ -924,6 +924,25 @@ class _HomePageState extends State<HomePage> {
         return p;
       }
     }
+    // If user has selected a default program in settings, use its
+    // title/video snapshot as the fallback content so the UI reflects
+    // the selected default program across channels.
+    final selectedDefault = appState.defaultProgram;
+    if (selectedDefault != null) {
+      return Program(
+        id: 'default_selected_${channelId}_${slotStart.toIso8601String()}',
+        title: selectedDefault.title,
+        channelId: channelId,
+        startTime: slotStart,
+        endTime: slotEnd,
+        durationSeconds: selectedDefault.durationSeconds > 0
+            ? selectedDefault.durationSeconds
+            : 1800,
+        videoUrl: selectedDefault.videoUrl,
+        videoType: selectedDefault.videoType,
+      );
+    }
+
     return Program(
       id: 'default_${channelId}_${slotStart.toIso8601String()}',
       title: _getDefaultProgramTitle(channelId),
@@ -940,6 +959,24 @@ class _HomePageState extends State<HomePage> {
     final now = DateTime.now();
     final startTime = now.add(Duration(minutes: slotIndex * 30));
     final endTime = startTime.add(const Duration(minutes: 30));
+
+    // Prefer the user-selected default program snapshot if present
+    final appState = context.read<AppState>();
+    final selectedDefault = appState.defaultProgram;
+    if (selectedDefault != null) {
+      return Program(
+        id: 'default_selected_${channelId}_$slotIndex',
+        title: selectedDefault.title,
+        channelId: channelId,
+        startTime: startTime,
+        endTime: endTime,
+        durationSeconds: selectedDefault.durationSeconds > 0
+            ? selectedDefault.durationSeconds
+            : 1800,
+        videoUrl: selectedDefault.videoUrl,
+        videoType: selectedDefault.videoType,
+      );
+    }
 
     return Program(
       id: 'default_${channelId}_$slotIndex',
