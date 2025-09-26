@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -164,6 +163,8 @@ class AppState extends ChangeNotifier {
   void setDefaultProgram(Program program) async {
     _defaultProgram = program;
     notifyListeners();
+    // Persist to both Hive (authoritative) and SharedPreferences (legacy/fallback)
+    await _saveDefaultProgram();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('default_program_id', program.id);
   }
@@ -310,8 +311,9 @@ class AppState extends ChangeNotifier {
         _settingsBox = await Hive.openBox(_settingsBoxName);
       }
       if (_defaultProgram != null) {
+        await _settingsBox!.put('default_program_id', _defaultProgram!.id);
         await _settingsBox!.put('default_program', _defaultProgram!.toJson());
-        print('Saved default program to Hive');
+        print('Saved default program (id and snapshot) to Hive');
       }
     } catch (e) {
       print('Error saving default program: $e');
@@ -323,10 +325,58 @@ class AppState extends ChangeNotifier {
       if (_settingsBox == null) {
         _settingsBox = await Hive.openBox(_settingsBoxName);
       }
+      // 1) Resolve by id if present
+      final savedId = _settingsBox!.get('default_program_id');
+      if (savedId is String) {
+        final match = _programs.firstWhere(
+          (p) => p.id == savedId,
+          orElse: () {
+            final snap = _settingsBox!.get('default_program');
+            if (snap is Map) {
+              return Program.fromJson(Map<String, dynamic>.from(snap));
+            }
+            throw Exception('No default program snapshot found');
+          },
+        );
+        _defaultProgram = match;
+        print('Loaded default program by id from Hive');
+        return;
+      }
+
+      // 2) Fallback to serialized snapshot in Hive
       final defaultProgramData = _settingsBox!.get('default_program');
-      if (defaultProgramData != null) {
-        _defaultProgram = Program.fromJson(defaultProgramData);
-        print('Loaded default program from Hive');
+      if (defaultProgramData != null && defaultProgramData is Map) {
+        _defaultProgram = Program.fromJson(
+          Map<String, dynamic>.from(defaultProgramData),
+        );
+        await _settingsBox!.put('default_program_id', _defaultProgram!.id);
+        print('Loaded default program snapshot from Hive');
+        return;
+      }
+
+      // Fallback: attempt to load from SharedPreferences by saved program id
+      final prefs = await SharedPreferences.getInstance();
+      final spId = prefs.getString('default_program_id');
+      if (spId != null) {
+        final match = _programs.firstWhere(
+          (p) => p.id == spId,
+          orElse: () => Program(
+            id: spId,
+            title: 'Default Program',
+            channelId: 'unknown',
+            startTime: DateTime.now(),
+            endTime: DateTime.now().add(const Duration(hours: 1)),
+            durationSeconds: 3600,
+            videoUrl: '',
+            videoType: VideoType.mp4,
+          ),
+        );
+        _defaultProgram = match;
+        // Save into Hive for future reliable loads
+        await _saveDefaultProgram();
+        print(
+          'Loaded default program from SharedPreferences and saved to Hive',
+        );
       }
     } catch (e) {
       print('Error loading default program: $e');

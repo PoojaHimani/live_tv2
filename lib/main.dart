@@ -64,16 +64,23 @@ void main() async {
     // Continue anyway - the app should still work
   }
 
-  runApp(const LiveTVApp());
+  // Create AppState and load persisted data before starting the UI so
+  // settings like the default program are available immediately.
+  final appState = AppState();
+  await appState.loadData();
+
+  runApp(LiveTVApp(appState: appState));
 }
 
 class LiveTVApp extends StatelessWidget {
-  const LiveTVApp({super.key});
+  const LiveTVApp({super.key, required this.appState});
+
+  final AppState appState;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AppState(),
+    return ChangeNotifierProvider.value(
+      value: appState,
       child: MaterialApp(
         title: 'Live TV',
         theme: ThemeData(
