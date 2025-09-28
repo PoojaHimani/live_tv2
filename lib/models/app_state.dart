@@ -6,18 +6,10 @@ import 'program.dart';
 
 class AppState extends ChangeNotifier {
   List<Channel> _channels = [];
-  List<Program> _programs = [
-    Program(
-      id: '1',
-      channelId: 'channel_1',
-      title: 'Sample MP4 Video 1',
-      videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-      videoType: VideoType.mp4,
-      startTime: DateTime.now(),
-      endTime: DateTime.now().add(const Duration(hours: 1)),
-      durationSeconds: 600, // 10 minutes
-    ),
-  ];
+  // Start with an empty program list by default. The app will load any
+  // persisted programs from Hive during startup. This prevents auto-adding
+  // sample/default programs on first run.
+  List<Program> _programs = [];
   String _selectedCategory = 'RECENT';
   bool _isAuthenticated = false;
   String _settingsPassword = '1234'; // Default password
@@ -148,13 +140,6 @@ class AppState extends ChangeNotifier {
     final index = _programs.indexWhere((p) => p.id == program.id);
     if (index != -1) {
       _programs[index] = program;
-      // If the updated program is currently set as the default, update
-      // the default snapshot so the settings UI reflects the changes.
-      if (_defaultProgram != null && _defaultProgram!.id == program.id) {
-        _defaultProgram = program;
-        // Persist updated default snapshot
-        _saveDefaultProgram();
-      }
       notifyListeners();
       _savePrograms();
     }
@@ -162,29 +147,8 @@ class AppState extends ChangeNotifier {
 
   void deleteProgram(String programId) {
     _programs.removeWhere((program) => program.id == programId);
-    // If the deleted program was the selected default, clear it
-    if (_defaultProgram != null && _defaultProgram!.id == programId) {
-      _defaultProgram = null;
-      _clearDefaultProgram();
-    }
     notifyListeners();
     _savePrograms();
-  }
-
-  // Remove persisted default program from Hive and SharedPreferences
-  Future<void> _clearDefaultProgram() async {
-    try {
-      if (_settingsBox == null) {
-        _settingsBox = await Hive.openBox(_settingsBoxName);
-      }
-      await _settingsBox!.delete('default_program_id');
-      await _settingsBox!.delete('default_program');
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('default_program_id');
-      print('Cleared default program from storage');
-    } catch (e) {
-      print('Error clearing default program: $e');
-    }
   }
 
   // Default program
